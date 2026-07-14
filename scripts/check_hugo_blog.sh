@@ -32,10 +32,22 @@ if [[ ! -f public/index.html ]]; then
   exit 1
 fi
 
-if rg -n 'src=/images/|href=/posts/' public --glob '*.html' >/dev/null; then
-  printf 'FAIL root-relative project assets found in generated HTML\n' >&2
-  rg -n 'src=/images/|href=/posts/' public --glob '*.html' >&2
+base_url="$(hugo config | sed -n "s/^baseurl = '\(.*\)'$/\1/p" | head -n 1)"
+if [[ -z "$base_url" || "$base_url" != */ ]]; then
+  printf 'FAIL baseURL is missing or does not end with /\n' >&2
   exit 1
+fi
+
+host_and_path="${base_url#*://}"
+base_path="/${host_and_path#*/}"
+
+if [[ "$base_path" != "/" ]]; then
+  root_relative_pattern='(src|href)=['"'"']?/(images|media|css|posts|about)(/|['"'"' >])'
+  if rg -n "$root_relative_pattern" public --glob '*.html' >/dev/null; then
+    printf 'FAIL root-relative paths dropped project prefix %s\n' "$base_path" >&2
+    rg -n "$root_relative_pattern" public --glob '*.html' >&2
+    exit 1
+  fi
 fi
 
 if [[ -f .github/workflows/hugo.yml ]] && ! rg -q 'cleanDestinationDir' .github/workflows/hugo.yml; then
