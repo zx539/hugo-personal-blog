@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hugo Personal Blog"
+  short_description: "Build and maintain modular Hugo blogs for GitHub Pages"
+  default_prompt: "Use $hugo-personal-blog to build or improve my modular Hugo personal blog and deploy it to GitHub Pages."
